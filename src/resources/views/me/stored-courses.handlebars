@@ -1,0 +1,153 @@
+<form method="POST" name="form-container" action="/khoa-hoc/handle-form-actions"  class="mt-4">
+  <div>
+    <h3>Khóa học của tôi</h3>
+    <a href="/me/trash/courses">Thùng rác</a>
+  </div>
+  <div class="d-flex mt-4 align-items-center">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="checkbox-all">
+      <label class="form-check-label" for="checkbox-all">
+        Chọn tất cả
+      </label>
+    </div>
+
+    <select class="custom-select custom-select-sm select-checkbox-all text-center" name="action" required>
+      <option value="">---Chọn Hành Động---</option>
+      <option value="delete">Xóa</option>
+    </select>
+
+    <button class="btn btn-primary btn-sm btn-submit-delete-multiple" disabled>Thực hiện</button>
+  </div>
+
+  <table class="table mt-4">
+    <thead>
+      <tr>
+        <th scope="col"></th>
+        <th scope="col">#</th>
+        <th scope="col">
+          Tên Khóa Học
+          {{{sortable 'name' _sort}}}
+        </th>
+        <th scope="col">
+          Trình độ
+          {{{sortable 'level' _sort}}}
+        </th>
+        <th scope="col">
+          Thời gian tạo
+          {{{sortable 'createdAt' _sort}}}
+        </th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each courses}}
+      <tr>
+        <td>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="coursesItemCheck[]" value="{{this._id}}">
+          </div>
+        </td>
+        <th scope="row">{{sum @index 1}}</th>
+        <td>{{this.name}}</td>
+        <td>{{this.level}}</td>
+        <td>{{this.createdAt}}</td>
+        <td>
+          <a href="/khoa-hoc/{{this._id}}/edit" class="btn btn-link">Sửa</a>
+          <a href="" class="btn btn-link" data-toggle="modal" data-target="#exampleModal" data-id="{{this._id}}">Xóa</a>
+        </td>
+      </tr>
+      {{else}}
+      <tr>
+        <td colspan="5" class="text-center">
+          Bạn chưa đăng khóa học nào
+          <a href="/khoa-hoc/create">Đăng khóa học</a>
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</form>
+
+<!-- Confirm delete course -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Xóa khóa học</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Bạn có chắc chắn muốn xóa khóa học này?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+        <button id="btn-delete-course" type="button" class="btn btn-danger">Xóa khóa học</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- form delete course --}}
+<form method="POST" name="form-delete-course"></form>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let coursesItemChecked = document.querySelectorAll('input[name="coursesItemCheck[]"]');
+    let btnDeleteCourse = document.getElementById('btn-delete-course');
+    let btnSubmitDeleteMultiple = document.querySelector('.btn-submit-delete-multiple');
+    let formContainer = document.forms['form-container'];
+    let formDeleteCourse = document.forms['form-delete-course'];
+    let checkboxAll = document.getElementById('checkbox-all');
+    let courseId;
+
+    //
+    $('#exampleModal').on('show.bs.modal', function (event) {
+      let button = $(event.relatedTarget);
+      courseId = button.data('id');
+      console.log(courseId);
+    })
+    //When click button 'Xóa'
+    btnDeleteCourse.onclick = function () {
+      formDeleteCourse.action = '/khoa-hoc/' + courseId + '?_method=DELETE';
+      formDeleteCourse.submit();
+    }
+
+    //Lắng nghe sự kiện của button 'Xóa tất cả'
+    checkboxAll.onchange = function () {
+      let isChecked = checkboxAll.checked;
+      coursesItemChecked.forEach(function (item) {
+        item.checked = isChecked;
+      })
+        renderCheckAllSubmitBtn();  
+    }
+    //
+    coursesItemChecked.forEach(function (item) {
+      item.onchange = function () {
+        let lengthCheckboxChecked = document.querySelectorAll('input[name="coursesItemCheck[]"]:checked').length;
+        let isAllChecked = coursesItemChecked.length === lengthCheckboxChecked;
+        checkboxAll.checked = isAllChecked;
+        renderCheckAllSubmitBtn();
+      }
+    })
+
+    //check all submit buttons clicked
+    {{!-- btnSubmitDeleteMultiple.onclick =  function(e) {
+      let isSubmitable = !btnSubmitDeleteMultiple.disabled;
+      if(isSubmitable) {
+        formContainer.submit();
+      }
+    } --}}
+  
+    function renderCheckAllSubmitBtn() {
+      let checkedCount = document.querySelectorAll('input[name="coursesItemCheck[]"]:checked').length;
+      if (checkedCount > 0) {
+        btnSubmitDeleteMultiple.disabled = false;
+      } else {
+        btnSubmitDeleteMultiple.disabled = true;
+      }
+    }
+  })
+</script>
